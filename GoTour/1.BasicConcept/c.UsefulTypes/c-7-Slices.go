@@ -10,6 +10,7 @@
 //
 //The following expression creates a slice which includes elements 1 through 3 of a:
 //
+//
 //a[1:4]
 package main
 
