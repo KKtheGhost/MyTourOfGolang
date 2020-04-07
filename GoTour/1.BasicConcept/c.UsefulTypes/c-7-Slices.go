@@ -16,7 +16,7 @@ package main
 import "fmt"
 
 var (
-	C7int    = [5]int{1, 2, 3, 4, 5}
+	C7int    = [6]int{1, 2, 3, 12, 4, 5}
 	C7string = "Aglathrax hig' thrixa"
 )
 
