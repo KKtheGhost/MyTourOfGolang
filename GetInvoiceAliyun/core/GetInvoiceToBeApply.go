@@ -7,6 +7,7 @@ package main
 //fmt仅用于调试,之后可以去掉.
 import (
 	"fmt"
+	"local/AesCalculate"
 
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/bssopenapi"
 )
@@ -16,8 +17,17 @@ import (
 //主要后面的accessKey和accessSecret需要通过aliyun-config.yml的配置来获取.
 //以及AliyunInvoiceInfo.BillCycle也需要处理一下.虽然多数阿里云账号没有MARKET消费,但是香肠派对和主账号是有的
 func main() {
+	AliyunDecryptKey := "sMok6A63cUigEE6P"
+	accessKey, accessSecret := "", ""
+	AliyunTokenKeyEncrypt, AliyunTokenSecretEncrypt := AesCalculate.AesEncrypt(accessKey, AliyunDecryptKey), AesCalculate.AesEncrypt(accessSecret, AliyunDecryptKey)
+	fmt.Printf("AliyunTokenKeyEncrypt is %v\n", AliyunTokenKeyEncrypt)
+	fmt.Printf("AliyunTokenSecretEncrypt is %v\n", AliyunTokenSecretEncrypt)
+	AliyunInvoiceClient, AliyunClientErr := bssopenapi.NewClientWithAccessKey("cn-shanghai", accessKey, accessSecret)
+	if AliyunClientErr != nil {
+		fmt.Print(AliyunClientErr.Error())
+	}
 	//构建APIclient用于后续获取源格式
-	AliyunInvoiceClient, AliyunInvoiceErr := bssopenapi.NewClientWithAccessKey("cn-shanghai", "accessKey", "accessSecret")
+	//AliyunInvoiceClient, err := bssopenapi.NewClientWithAccessKey("cn-shanghai", "accessKey", "accessSecret")
 	AliyunInvoiceInfo := bssopenapi.CreateQueryEvaluateListRequest()
 	AliyunInvoiceInfo.Scheme = "https"
 	AliyunInvoiceInfo.BillCycle = "ALIYUN"
@@ -27,7 +37,6 @@ func main() {
 		fmt.Print(AliyunInvoiceErr.Error())
 	}
 	fmt.Printf("%#v\n", AliyunInvoiceResponse.Data.TotalInvoiceAmount)
-	fmt.Println("--------------------")
 	//size := gojsonq.New().JSONString(AliyunInvoiceResponse).From("Data.PageSize")
 	//fmt.Println(size.(string))
 }
