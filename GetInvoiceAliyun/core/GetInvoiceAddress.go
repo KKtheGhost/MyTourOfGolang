@@ -7,19 +7,6 @@ import (
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/bssopenapi"
 )
 
-type AliyunTokenSet struct {
-	TokenIndex               int
-	AliyunNicknam            string
-	AliyunDecryptKey         string
-	AliyunTokenKeyEncrypt    string
-	AliyunTokenSecretEncrypt string
-}
-
-//解密Token的func
-func DecryptToken(AliyunTokenKeyEncrypt, AliyunTokenSecretEncrypt string) (accessKey, accessSecret string) {
-
-}
-
 func GetInvoiceAddress(AliyunID string) (response *QueryCustomerAddressListResponse) {
 	//入参是AliyunID,通过ID,在AliyunTokenSet这个结构体中去找正确的key和secret.
 	AliyunInvoiceClient, AliyunClientErr := bssopenapi.NewClientWithAccessKey("cn-shanghai", accessKey, accessSecret)
