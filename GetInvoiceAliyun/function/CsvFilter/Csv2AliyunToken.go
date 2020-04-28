@@ -2,10 +2,11 @@
 package main
 
 import (
+	"encoding/csv"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"strings"
-	"encoding/csv"
 )
 
 //本package的ERROR CODE表。
@@ -19,39 +20,44 @@ var CsvErrorCode = map[int]string{
 type AliyunTokenSet struct {
 	AliyunNicknam            string
 	AliyunDecryptKey         string
-	AliyunTokenKeyEncrypt    string
 	AliyunTokenSecretEncrypt string
 }
 
-func CsvReader() bool{
+func CsvReader() [][]string {
 	//var AliyunTokenMetrix map[int]AliyunTokenSet
 	CsvFileName := "AliyunToken.csv"
 	CsvFilePath := "/etc/GetAliyunInvoice/"
-	CsvFile := CsvFilePath + CsvFileName	//此处最好还是绝对路径写死吧，比如需要把配置放到/etc或者/opt下面，这样比较安全。
-	CsvFileRawContent, CsvFileRawContentErr := ioutil.ReadFile(CsvFile)	//需要判断CSV的存在性，及时中断
+	CsvFile := CsvFilePath + CsvFileName                                //此处最好还是绝对路径写死吧，比如需要把配置放到/etc或者/opt下面，这样比较安全。
+	CsvFileRawContent, CsvFileRawContentErr := ioutil.ReadFile(CsvFile) //需要判断CSV的存在性，及时中断
 	if CsvFileRawContentErr != nil {
 		fmt.Println(CsvErrorCode[1])
-		return false
+		os.Exit(0)
 	}
 	CsvFileReaderContent := csv.NewReader(strings.NewReader(string(CsvFileRawContent)))
-	CsvFileContent, CsvFileContentErr := CsvFileReaderContent.ReadAll()	
+	CsvFileContent, CsvFileContentErr := CsvFileReaderContent.ReadAll()
 	if CsvFileContentErr != nil {
 		fmt.Println(CsvErrorCode[2])
-		return false
+		os.Exit(0)
 	}
+	//此处需要验证输出的合法性：1. 字段合规  2.加密token格式合规 3.解密格式合规 4.存在两行及以上的输出。
+	//fmt.Println(CsvFileContent) //测试能否获取输出用语句
+	return CsvFileContent
+}
+
+//把CsvReader中获取的[][]string结构，通过循环打到结构体AliyunTokenMetrix里面去
+//func CsvConvert() {
+func main() {
+	AliyunTokenMetrix := make(map[int]AliyunTokenSet)
+	CsvFileContent := CsvReader()
 	AliyunTokenSetNum := len(CsvFileContent)
 	if AliyunTokenSetNum < 2 {
 		fmt.Println(CsvErrorCode[3])
-		return false
+		os.Exit(0)
 	}
-	
-	//此处需要验证输出的合法性：1. 字段合规  2.加密token格式合规 3.解密格式合规 4.存在两行及以上的输出。
-	fmt.Println(CsvFileContent)	//测试能否获取输出用语句
-	return true
-}
-
-//func CsvConvert() {
-func main() {
-	//var AliyunTokenMetrix map[int]AliyunTokenSet
-	CsvReader()
+	//fmt.Println(CsvFileContent)
+	for i := 1; i < AliyunTokenSetNum; i++ {
+		AliyunToken := AliyunTokenSet{CsvFileContent[i][1], CsvFileContent[i][2], CsvFileContent[i][3]}
+		AliyunTokenMetrix[i] = AliyunToken
+	}
+	fmt.Println(AliyunTokenMetrix)
 }
