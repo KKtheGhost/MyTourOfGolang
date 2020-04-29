@@ -13,6 +13,7 @@ import (
 
 var GetAddressErrorCode = map[int]string{
 	1: "ERROR! GAE001: Missing Csv FIle - Cannot Read the DecryptCode file or the file is not existing.",
+	2: "ERROR! GAE002: Error Building Client - Please check out network status and browser settings.",
 }
 
 //解密单个AliyunTokenSet的密钥
@@ -38,7 +39,7 @@ func GetInvoiceAddress(AliyunID int) (response *bssopenapi.QueryCustomerAddressL
 	accessKey, accessSecret := TokenDecrypt(CsvFilter.CsvConvert()[AliyunID])
 	AliyunInvoiceClient, AliyunClientErr := bssopenapi.NewClientWithAccessKey("cn-shanghai", accessKey, accessSecret)
 	if AliyunClientErr != nil {
-		fmt.Print(AliyunClientErr.Error())
+		fmt.Println(GetAddressErrorCode[2])
 	}
 	AliyunInvoiceRequest := bssopenapi.CreateQueryCustomerAddressListRequest()
 	AliyunInvoiceRequest.Scheme = "https"
