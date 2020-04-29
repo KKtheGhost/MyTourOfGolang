@@ -15,6 +15,7 @@ import (
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/bssopenapi"
 )
 
+//本函数的报错代码
 var GetAmountErrorCode = map[int]string{
 	1: "ERROR! GAE001: Missing Csv FIle - Cannot Read the DecryptCode file or the file is not existing.",
 	2: "ERROR! GAE002: Error Building Client - Please check out network status and browser settings.",
@@ -26,8 +27,10 @@ type AliyunAmountMetrix struct {
 	AliyunInvoiceAmount int64
 }
 
+//本变量重复申明，最后打包main的时候需要删除。
 var EncryptedMetrixLen int = len(CsvFilter.CsvConvert())
 
+//本函数为重复函数，最后打包main的时候需要删除。core本身也应该作为一个包去使用
 func TokenDecrypt(EncryptedMetrix CsvFilter.AliyunTokenSet) (accessKey string, accessSecret string) {
 	DecryptKey, DecryptKeyErr := ioutil.ReadFile("/etc/GetAliyunInvoice/DecryptCode.key")
 	if DecryptKeyErr != nil {
@@ -40,23 +43,25 @@ func TokenDecrypt(EncryptedMetrix CsvFilter.AliyunTokenSet) (accessKey string, a
 	return OriginAccessKey, OriginAccessSecret
 }
 
+//本函数获取本月可申请账单额度
 func GetInvoiceAmount(AliyunID int) (response *bssopenapi.QueryEvaluateListResponse) {
 	accessKey, accessSecret := TokenDecrypt(CsvFilter.CsvConvert()[1])
 	AliyunInvoiceClient, AliyunClientErr := bssopenapi.NewClientWithAccessKey("cn-shanghai", accessKey, accessSecret)
 	if AliyunClientErr != nil {
-		fmt.Print(AliyunClientErr.Error())
+		fmt.Println(GetAmountErrorCode[2])
 	}
 	AliyunInvoiceInfo := bssopenapi.CreateQueryEvaluateListRequest()
 	AliyunInvoiceInfo.Scheme = "https"
 	AliyunInvoiceInfo.BillCycle = "ALIYUN"
 	AliyunInvoiceResponse, AliyunInvoiceErr := AliyunInvoiceClient.QueryEvaluateList(AliyunInvoiceInfo)
 	if AliyunInvoiceErr != nil {
-		fmt.Print(AliyunInvoiceErr.Error())
+		fmt.Println(GetAmountErrorCode[3])
 	}
 	return AliyunInvoiceResponse
 	//fmt.Printf("%#v\n", AliyunInvoiceResponse.Data.TotalInvoiceAmount)
 }
 
+//通过循环打包，输出一个结构体合集，包含项目名+可开票金额
 func GenerateAmountMetrix() map[int]AliyunAmountMetrix {
 	AmountMetrixRes := make(map[int]AliyunAmountMetrix)
 	//此处上界为大于等于，因为Aliyun起始是1
@@ -69,6 +74,7 @@ func GenerateAmountMetrix() map[int]AliyunAmountMetrix {
 	return AmountMetrixRes
 }
 
+//main仅供测试使用。
 func main() {
 	fmt.Println(GenerateAmountMetrix())
 }
