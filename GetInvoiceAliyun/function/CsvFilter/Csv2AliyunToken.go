@@ -1,5 +1,6 @@
-//package CsvFilter
-package main
+package CsvFilter
+
+//package main
 
 import (
 	"encoding/csv"
@@ -19,7 +20,7 @@ var CsvErrorCode = map[int]string{
 //本函数目的就是将CSV文件转化为下面的结构体, 并且输出到core功能中, 通过AES解密后, 给Client使用.下面的数据都需要传递.
 type AliyunTokenSet struct {
 	AliyunNicknam            string
-	AliyunDecryptKey         string
+	AliyunTokenKeyEncrypt    string
 	AliyunTokenSecretEncrypt string
 }
 
@@ -45,8 +46,8 @@ func CsvReader() [][]string {
 }
 
 //把CsvReader中获取的[][]string结构，通过循环打到结构体AliyunTokenMetrix里面去
-//func CsvConvert() {
-func main() {
+//func main() {
+func CsvConvert() map[int]AliyunTokenSet {
 	AliyunTokenMetrix := make(map[int]AliyunTokenSet)
 	CsvFileContent := CsvReader()
 	AliyunTokenSetNum := len(CsvFileContent)
@@ -59,5 +60,6 @@ func main() {
 		AliyunToken := AliyunTokenSet{CsvFileContent[i][1], CsvFileContent[i][2], CsvFileContent[i][3]}
 		AliyunTokenMetrix[i] = AliyunToken
 	}
-	fmt.Println(AliyunTokenMetrix)
+	//fmt.Println(AliyunTokenMetrix)
+	return AliyunTokenMetrix
 }
