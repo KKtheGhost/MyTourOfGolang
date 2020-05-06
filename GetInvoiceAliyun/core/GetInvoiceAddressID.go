@@ -50,12 +50,14 @@ func GetInvoiceAddress(AliyunID int) (response *bssopenapi.QueryCustomerAddressL
 	AliyunInvoiceClient, AliyunClientErr := bssopenapi.NewClientWithAccessKey("cn-shanghai", accessKey, accessSecret)
 	if AliyunClientErr != nil {
 		fmt.Println(GetAddressErrorCode[2])
+		os.Exit(0)
 	}
 	AliyunInvoiceRequest := bssopenapi.CreateQueryCustomerAddressListRequest()
 	AliyunInvoiceRequest.Scheme = "https"
 	AliyunInvoiceResponse, AliyunInvoiceErr := AliyunInvoiceClient.QueryCustomerAddressList(AliyunInvoiceRequest)
 	if AliyunInvoiceErr != nil {
 		fmt.Println(GetAddressErrorCode[3])
+		os.Exit(0)
 	}
 	return AliyunInvoiceResponse
 	//返回的是一个合集，需要筛选生成结构体

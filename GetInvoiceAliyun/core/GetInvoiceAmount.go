@@ -45,17 +45,21 @@ func TokenDecrypt(EncryptedMetrix CsvFilter.AliyunTokenSet) (accessKey string, a
 
 //本函数获取本月可申请账单额度
 func GetInvoiceAmount(AliyunID int) (response *bssopenapi.QueryEvaluateListResponse) {
-	accessKey, accessSecret := TokenDecrypt(CsvFilter.CsvConvert()[AliyunID])
+	CsvResult := CsvFilter.CsvConvert()
+	AmountProjName := CsvResult[AliyunID].AliyunNicknam
+	accessKey, accessSecret := TokenDecrypt(CsvResult[AliyunID])
 	AliyunInvoiceClient, AliyunClientErr := bssopenapi.NewClientWithAccessKey("cn-shanghai", accessKey, accessSecret)
 	if AliyunClientErr != nil {
 		fmt.Println(GetAmountErrorCode[2])
+		os.Exit(0)
 	}
 	AliyunInvoiceInfo := bssopenapi.CreateQueryEvaluateListRequest()
 	AliyunInvoiceInfo.Scheme = "https"
 	AliyunInvoiceInfo.BillCycle = "202004"
 	AliyunInvoiceResponse, AliyunInvoiceErr := AliyunInvoiceClient.QueryEvaluateList(AliyunInvoiceInfo)
 	if AliyunInvoiceErr != nil {
-		fmt.Println(GetAmountErrorCode[3])
+		fmt.Println(GetAmountErrorCode[3], "\n", AmountProjName, "has an incorrect token!")
+		os.Exit(0)
 	}
 	return AliyunInvoiceResponse
 	//fmt.Printf("%#v\n", AliyunInvoiceResponse.Data.TotalInvoiceAmount)
