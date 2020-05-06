@@ -1,0 +1,2 @@
+通过../core/TokenEncryptTool把阿里云的ATkey和ATsecret加密后，按照格式写入到AliyunToken.csv.mod，然后把加密用到的密码写入到DecryptCode.key中。
+然后把AliyunToken.csv.mod和DecryptCode.key复制到/etc/GetAliyunInvoice下即可。

@@ -24,7 +24,7 @@ var GetAmountErrorCode = map[int]string{
 
 type AliyunAmountMetrix struct {
 	AliyunProjName      string
-	AliyunInvoiceAmount int64
+	AliyunInvoiceAmount float64
 }
 
 //本变量重复申明，最后打包main的时候需要删除。
@@ -45,14 +45,14 @@ func TokenDecrypt(EncryptedMetrix CsvFilter.AliyunTokenSet) (accessKey string, a
 
 //本函数获取本月可申请账单额度
 func GetInvoiceAmount(AliyunID int) (response *bssopenapi.QueryEvaluateListResponse) {
-	accessKey, accessSecret := TokenDecrypt(CsvFilter.CsvConvert()[1])
+	accessKey, accessSecret := TokenDecrypt(CsvFilter.CsvConvert()[AliyunID])
 	AliyunInvoiceClient, AliyunClientErr := bssopenapi.NewClientWithAccessKey("cn-shanghai", accessKey, accessSecret)
 	if AliyunClientErr != nil {
 		fmt.Println(GetAmountErrorCode[2])
 	}
 	AliyunInvoiceInfo := bssopenapi.CreateQueryEvaluateListRequest()
 	AliyunInvoiceInfo.Scheme = "https"
-	AliyunInvoiceInfo.BillCycle = "ALIYUN"
+	AliyunInvoiceInfo.BillCycle = "202004"
 	AliyunInvoiceResponse, AliyunInvoiceErr := AliyunInvoiceClient.QueryEvaluateList(AliyunInvoiceInfo)
 	if AliyunInvoiceErr != nil {
 		fmt.Println(GetAmountErrorCode[3])
@@ -66,7 +66,8 @@ func GenerateAmountMetrix() map[int]AliyunAmountMetrix {
 	AmountMetrixRes := make(map[int]AliyunAmountMetrix)
 	//此处上界为大于等于，因为Aliyun起始是1
 	for AliyunID := 1; AliyunID <= EncryptedMetrixLen; AliyunID++ {
-		Amount := GetInvoiceAmount(AliyunID).Data.TotalInvoiceAmount
+		RawAmount := GetInvoiceAmount(AliyunID).Data.TotalUnAppliedInvoiceAmount
+		Amount := float64(RawAmount) / 100
 		AmountProjName := CsvFilter.CsvConvert()[AliyunID].AliyunNicknam
 		AmountMetrix := AliyunAmountMetrix{AmountProjName, Amount}
 		AmountMetrixRes[AliyunID] = AmountMetrix
@@ -76,5 +77,9 @@ func GenerateAmountMetrix() map[int]AliyunAmountMetrix {
 
 //main仅供测试使用。
 func main() {
-	fmt.Println(GenerateAmountMetrix())
+	TestMetrix := GenerateAmountMetrix()
+	for i := 1; i <= EncryptedMetrixLen; i++ {
+		fmt.Printf("%v\n", TestMetrix[i])
+	}
+	//fmt.Printf("%v\n", GenerateAmountMetrix())
 }
