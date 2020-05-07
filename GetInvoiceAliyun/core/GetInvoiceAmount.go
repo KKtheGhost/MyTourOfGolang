@@ -11,6 +11,7 @@ import (
 	"local/AesCalculate"
 	"local/CsvFilter"
 	"os"
+	"time"
 
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/bssopenapi"
 )
@@ -22,10 +23,14 @@ var GetAmountErrorCode = map[int]string{
 	3: "ERROR! GAE003: Error Invoice Request - Please contact Aliyun support to figure out causes.",
 }
 
+//设定项目-账单结构体
 type AliyunAmountMetrix struct {
 	AliyunProjName      string
 	AliyunInvoiceAmount float64
 }
+
+//设定日期格式用于下面获取日期
+const DATE_FORMAT = "20060102"
 
 //本变量重复申明，最后打包main的时候需要删除。
 var EncryptedMetrixLen int = len(CsvFilter.CsvConvert())
@@ -44,7 +49,7 @@ func TokenDecrypt(EncryptedMetrix CsvFilter.AliyunTokenSet) (accessKey string, a
 }
 
 //本函数获取本月可申请账单额度
-func GetInvoiceAmount(AliyunID int) (response *bssopenapi.QueryEvaluateListResponse) {
+func GetInvoiceAmount(LastMonth string, AliyunID int) (response *bssopenapi.QueryEvaluateListResponse) {
 	CsvResult := CsvFilter.CsvConvert()
 	AmountProjName := CsvResult[AliyunID].AliyunNicknam
 	accessKey, accessSecret := TokenDecrypt(CsvResult[AliyunID])
@@ -55,7 +60,9 @@ func GetInvoiceAmount(AliyunID int) (response *bssopenapi.QueryEvaluateListRespo
 	}
 	AliyunInvoiceInfo := bssopenapi.CreateQueryEvaluateListRequest()
 	AliyunInvoiceInfo.Scheme = "https"
-	AliyunInvoiceInfo.BillCycle = "202004"
+	AliyunInvoiceInfo.BillCycle = LastMonth
+	AliyunInvoiceInfo.BizTypeList = &[]string{"MARKETPLACE"}
+
 	AliyunInvoiceResponse, AliyunInvoiceErr := AliyunInvoiceClient.QueryEvaluateList(AliyunInvoiceInfo)
 	if AliyunInvoiceErr != nil {
 		fmt.Println(GetAmountErrorCode[3], "\n", AmountProjName, "has an incorrect token!")
@@ -67,10 +74,16 @@ func GetInvoiceAmount(AliyunID int) (response *bssopenapi.QueryEvaluateListRespo
 
 //通过循环打包，输出一个结构体合集，包含项目名+可开票金额
 func GenerateAmountMetrix() map[int]AliyunAmountMetrix {
+	//获取上个月月份
+	Year, Month, _ := time.Now().Date()
+	ThisMonth := time.Date(Year, Month, 1, 0, 0, 0, 0, time.Local)
+	LastMonth := ThisMonth.AddDate(0, -1, 0).Format(DATE_FORMAT)
+	LastMonth = LastMonth[:6]
+	//=======================
 	AmountMetrixRes := make(map[int]AliyunAmountMetrix)
 	//此处上界为大于等于，因为Aliyun起始是1
 	for AliyunID := 1; AliyunID <= EncryptedMetrixLen; AliyunID++ {
-		RawAmount := GetInvoiceAmount(AliyunID).Data.TotalUnAppliedInvoiceAmount
+		RawAmount := GetInvoiceAmount(LastMonth, AliyunID).Data.TotalUnAppliedInvoiceAmount
 		Amount := float64(RawAmount) / 100
 		AmountProjName := CsvFilter.CsvConvert()[AliyunID].AliyunNicknam
 		AmountMetrix := AliyunAmountMetrix{AmountProjName, Amount}
@@ -83,7 +96,7 @@ func GenerateAmountMetrix() map[int]AliyunAmountMetrix {
 func main() {
 	TestMetrix := GenerateAmountMetrix()
 	for i := 1; i <= EncryptedMetrixLen; i++ {
-		fmt.Printf("%v\n", TestMetrix[i])
+		//fmt.Printf("%v\n", TestMetrix[i].AliyunProjName)
+		fmt.Printf("%.2f\n", TestMetrix[i].AliyunInvoiceAmount)
 	}
-	//fmt.Printf("%v\n", GenerateAmountMetrix())
 }
