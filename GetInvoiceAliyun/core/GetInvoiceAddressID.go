@@ -1,4 +1,4 @@
-package main
+package AliyunInvoiceCore
 
 import (
 	"fmt"
@@ -27,7 +27,8 @@ type AliyunAddrMetrix struct {
 }
 
 //获取Csv输出长度，用于后续循环。
-var EncryptedMetrixLen int = len(CsvFilter.CsvConvert())
+var CsvConvertRes = CsvFilter.CsvConvert()
+var EncryptedMetrixLen int = len(CsvConvertRes)
 
 //解密单个AliyunTokenSet的密钥
 func TokenDecrypt(EncryptedMetrix CsvFilter.AliyunTokenSet) (accessKey string, accessSecret string) {
@@ -46,7 +47,7 @@ func TokenDecrypt(EncryptedMetrix CsvFilter.AliyunTokenSet) (accessKey string, a
 func GetInvoiceAddress(AliyunID int) (response *bssopenapi.QueryCustomerAddressListResponse) {
 	//入参是AliyunID,通过ID,在AliyunTokenSet这个结构体中去找正确的key和secret.
 	//AliyunID的好处是，从CsvFilter开始，就保持了index的稳定和一致性，便于后期排查问题。此处的AliyunID从1开始。在维护时需要注意。
-	accessKey, accessSecret := TokenDecrypt(CsvFilter.CsvConvert()[AliyunID])
+	accessKey, accessSecret := TokenDecrypt(CsvConvertRes[AliyunID])
 	AliyunInvoiceClient, AliyunClientErr := bssopenapi.NewClientWithAccessKey("cn-shanghai", accessKey, accessSecret)
 	if AliyunClientErr != nil {
 		fmt.Println(GetAddressErrorCode[2])
@@ -70,7 +71,7 @@ func GenerateAddrMetrix() map[int]AliyunAddrMetrix {
 	for AliyunID := 1; AliyunID <= EncryptedMetrixLen; AliyunID++ {
 		AddrList := GetInvoiceAddress(AliyunID).Data.CustomerInvoiceAddressList.CustomerInvoiceAddress
 		AddrNum := len(AddrList)
-		AddrProjName := CsvFilter.CsvConvert()[AliyunID].AliyunNicknam
+		AddrProjName := CsvConvertRes[AliyunID].AliyunNicknam
 		for AddrID := 0; AddrID < AddrNum; AddrID++ {
 			if AddrList[AddrID].Addressee == "方苇" {
 				AddrMetrix := AliyunAddrMetrix{AddrProjName, AddrList[AddrID].Id, AddrList[AddrID].Addressee, AddrList[AddrID].DeliveryAddress}
@@ -84,6 +85,9 @@ func GenerateAddrMetrix() map[int]AliyunAddrMetrix {
 }
 
 //main仅作为测试用，最后这个要打成一个包的
-func main() {
-	fmt.Println(GenerateAddrMetrix())
-}
+//func main() {
+//	GenerateAddrMetrixRes := GenerateAddrMetrix()
+//	for i := 1; i <= EncryptedMetrixLen; i++ {
+//		fmt.Printf("%v,%v,%v\n", GenerateAddrMetrixRes[i].AliyunAddrProjName, GenerateAddrMetrixRes[i].AliyunAddressID, GenerateAddrMetrixRes[i].AliyunAddressee)
+//	}
+//}
